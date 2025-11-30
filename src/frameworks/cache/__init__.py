@@ -1,0 +1,3 @@
+"""
+Framework de caché - Redis.
+"""
