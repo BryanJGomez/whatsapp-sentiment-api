@@ -14,7 +14,7 @@ from src.app.messages.http.webhook_blueprint import webhook_blueprint
 
 # Importar repositorios
 from src.app.messages.repositories.message_repository import MessageRepository
-from src.app.dashboard.repositories.dasboard_repository import DashboardRepository
+from src.app.dashboard.repositories.dashboard_repository import DashboardRepository
 
 # Importar servicios
 from src.app.messages.services.sentiment_analysis_service import SentimentAnalysisService
@@ -45,11 +45,11 @@ redis_cache = RedisCache()
 # Crear cola de mensajes
 message_queue = MessageQueue()
 
-# Crear repositorios (sin socket manager en main.py, solo se usa en worker)
+# Crear repositorios
 message_repository = MessageRepository(mongo_db)
 dashboard_repository = DashboardRepository(mongo_db)
 
-# Crear servicios (con caché opcional)
+# Crear servicios
 sentiment_analysis_service = SentimentAnalysisService(redis_cache=redis_cache)
 
 # Casos de uso

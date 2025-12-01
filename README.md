@@ -2,6 +2,8 @@
 
 Sistema de análisis de sentimientos para mensajes de WhatsApp utilizando IA (Google Gemini), con WebSockets en tiempo real, caché Redis y almacenamiento MongoDB.
 
+🌐 **URL de Producción**: [https://whatsapp-sentiment-api-production-98fb.up.railway.app](https://whatsapp-sentiment-api-production-98fb.up.railway.app)
+
 ---
 
 ## 🎯 Descripción del Proyecto
@@ -130,6 +132,12 @@ cd whatsapp-sentiment-api
 cp .env.example .env
 ```
 
+**Importante:**
+
+- El mismo `.env` funciona tanto para desarrollo como producción
+- Para desarrollo: usa `docker-compose.dev.yml` (Flask con hot-reload)
+- Para producción: usa `docker-compose.yml` (Gunicorn + eventlet)
+
 **Nota importante:** Los nombres `mongo` y `redis` en las URIs corresponden a los **nombres de los servicios** definidos en `docker-compose.yml`. Docker Compose crea una red interna donde los contenedores pueden comunicarse usando estos nombres.
 
 ### 🚀 Paso 3: Levantar los Servicios con Docker Compose
@@ -163,18 +171,23 @@ docker-compose -f docker-compose.dev.yml logs -f redis
 2. Descarga las imágenes de MongoDB 7.0 y Redis 7
 3. Crea una red Docker llamada `backend` para que los contenedores se comuniquen
 4. Levanta 4 contenedores:
-   - `app`: Aplicación Flask con Gunicorn
+   - `app`: Aplicación Flask directa (dev_server.py) con hot-reload
    - `worker`: Procesador de mensajes en background
    - `mongo`: Base de datos MongoDB
    - `redis`: Cache y cola de mensajes
-5. Monta tu código local en `/app/` dentro del contenedor (hot reload)
+5. Monta tu código local en `/app/` dentro del contenedor (hot reload automático)
+
+**Diferencias entre dev y producción:**
+
+- **Desarrollo** (`docker-compose.dev.yml`): Usa `python dev_server.py` → Flask puro, hot-reload, WebSockets estables
+- **Producción** (`docker-compose.yml`): Usa `gunicorn + eventlet` → Mejor rendimiento, sin hot-reload
 
 #### Opción B: Producción simulada con docker-compose.yml
 
 Este archivo es más simple, asume que MongoDB y Redis están externos (Railway, por ejemplo):
 
 ```bash
-# Iniciar solo app y worker (requiere MongoDB y Redis externos)
+# Iniciar solo app y worker con gunicorn (producción)
 docker-compose up -d
 ```
 
@@ -316,16 +329,55 @@ Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
 
 ### Configurar Twilio para WhatsApp
 
+1. Numero configurado para este proyecto en sandbox +14155238886
+
+#### Paso 1: Crear cuenta y obtener Sandbox
+
 1. Crear cuenta en [Twilio](https://www.twilio.com)
-2. Ir a Messaging → Try it out → Send a WhatsApp message
-3. Configurar webhook en Twilio:
-   - URL: `https://tu-app.railway.app/api/v1/webhook/message`
-   - Método: POST
-4. Agregar credenciales a `.env`:
-   ```env
-   TWILIO_ACCOUNT_SID=ACxxxx
-   TWILIO_AUTH_TOKEN=xxxx
+2. Ir a **Messaging** → **Try it out** → **Send a WhatsApp message**
+3. Verás el **número de sandbox de Twilio** (ej: `+1 415 523 8886`)
+4. **IMPORTANTE**: Para activar tu WhatsApp personal con el sandbox:
+   - Abre WhatsApp en tu teléfono
+   - Inicia un chat con el número del sandbox (ej: `+1 415 523 8886`)
+   - Envía el mensaje que te muestra Twilio (ej: `join current-doctor`)
+   - Recibirás una confirmación de Twilio
+   - ⚠️ **Sin este paso, tus mensajes NO llegarán a tu aplicación**
+   - La conexión dura 72 horas, después debes repetir el proceso
+
+#### Paso 2: Configurar Webhook
+
+1. En Twilio Console, ve a **Messaging** → **Settings** → **WhatsApp Sandbox Settings**
+2. En **"When a message comes in"**, configura:
+   - **URL**: `https://tu-app.railway.app/webhook/whatsapp` (o tu ngrok URL para desarrollo local)
+   - **Método**: `POST`
+3. Guarda los cambios
+
+#### Paso 3: Probar la Integración
+
+1. Asegúrate de que tu aplicación esté corriendo (`docker-compose up`)
+2. Envía un mensaje de WhatsApp al número del sandbox desde tu teléfono
+3. Verifica en los logs que el mensaje fue recibido:
+   ```bash
+   docker-compose -f docker-compose.dev.yml logs -f app
+   docker-compose -f docker-compose.dev.yml logs -f worker
    ```
+4. El análisis de sentimientos se procesará en background
+
+#### 🔧 Desarrollo Local con ngrok
+
+Si quieres probar webhooks en tu máquina local:
+
+```bash
+# Instalar ngrok
+brew install ngrok  # macOS
+# O descargar desde https://ngrok.com/download
+
+# Exponer tu puerto local (8301 por defecto)
+ngrok http 8301
+
+# Copiar la URL HTTPS que ngrok te da (ej: https://abc123.ngrok.io)
+# Actualizar el webhook en Twilio con: https://abc123.ngrok.io/webhook/whatsapp
+```
 
 ---
 

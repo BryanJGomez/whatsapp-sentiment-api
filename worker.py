@@ -13,7 +13,7 @@ from src.app.messages.repositories.message_repository import MessageRepository
 from src.app.messages.services.sentiment_analysis_service import SentimentAnalysisService
 from src.frameworks.logging.logger import setup_logger
 from src.config.settings import settings
-from src.app.dashboard.repositories.dasboard_repository import DashboardRepository
+from src.app.dashboard.repositories.dashboard_repository import DashboardRepository
 
 
 logger = setup_logger(__name__)

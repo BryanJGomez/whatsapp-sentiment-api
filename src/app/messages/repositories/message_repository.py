@@ -35,9 +35,6 @@ class MessageRepository:
 
         Args:
             message: Entidad Message a guardar
-
-        Returns:
-            ID del mensaje guardado
         """
         doc = message.to_dict()
         result = self.collection.insert_one(doc)
@@ -70,7 +67,6 @@ class MessageRepository:
 
         logger.info(f"Análisis: {message_id} → {sentimiento}/{tema}")
 
-        # Emitir eventos Socket.IO si está configurado
         self._emit_analysis_events(message_id, sentimiento, tema, resumen, numero_remitente)
 
     def _emit_analysis_events(self, message_id: str, sentimiento: str, tema: str, resumen: str, numero_remitente: str = None):
@@ -125,9 +121,6 @@ class MessageRepository:
 
         Args:
             limit: Número máximo de mensajes a retornar
-
-        Returns:
-            Lista de mensajes serializados
         """
         cursor = self.collection.find().sort("timestamp", -1).limit(limit)
         messages = serialize_mongo_document(list(cursor))
@@ -136,9 +129,6 @@ class MessageRepository:
     def get_sentiment_distribution(self) -> dict:
         """
         Obtiene la distribución de sentimientos.
-
-        Returns:
-            Diccionario con conteo por sentimiento
         """
         pipeline = [
             {"$match": {"sentimiento": {"$ne": None}}},
@@ -166,12 +156,6 @@ class MessageRepository:
     def get_top_topics(self, limit: int = 5) -> List[dict]:
         """
         Obtiene los temas más frecuentes.
-
-        Args:
-            limit: Número de temas a retornar
-
-        Returns:
-            Lista de temas con su frecuencia
         """
         pipeline = [
             {"$match": {"tema": {"$ne": None}}},
@@ -192,9 +176,6 @@ class MessageRepository:
     def get_statistics(self) -> dict:
         """
         Obtiene estadísticas generales del dashboard.
-
-        Returns:
-            Diccionario con estadísticas
         """
         logger.debug("Calculando estadísticas generales")
 

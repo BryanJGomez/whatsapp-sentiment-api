@@ -3,7 +3,7 @@ Casos de uso para el dashboard.
 """
 
 from src.frameworks.logging.logger import setup_logger
-from src.app.dashboard.repositories.dasboard_repository import DashboardRepository
+from src.app.dashboard.repositories.dashboard_repository import DashboardRepository
 
 logger = setup_logger(__name__)
 

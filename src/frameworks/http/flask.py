@@ -25,7 +25,7 @@ def create_flask_app(blueprints: list):
     """
     app = Flask(__name__)
 
-    # CONFIGURACIÓN DE FLASK
+    # Configuraciones básicas de Flask
     app.config['ENV'] = settings.FLASK_ENV
     app.config['DEBUG'] = settings.FLASK_DEBUG
     app.config['JSON_AS_ASCII'] = False  # Para caracteres UTF-8
@@ -44,7 +44,7 @@ def create_flask_app(blueprints: list):
         }
     })
 
-    # CONFIGURACIÓN DE SOCKET.IO CON REDIS MESSAGE QUEUE
+    # Configuración de Socket.IO coon redis message Queue
     # Necesario para múltiples workers/procesos (Gunicorn, Railway)
     if settings.REDIS_PASSWORD:
         redis_url = f'redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/0'
@@ -106,7 +106,7 @@ def create_flask_app(blueprints: list):
             "cors_origins": settings.SOCKETIO_CORS_ORIGINS
         }), 200
 
-    # REGISTRAR MANEJADORES DE ERRORES
+    # Registrar manejadores de errores personalizados
     register_error_handlers(app)
 
     return app, socketio
