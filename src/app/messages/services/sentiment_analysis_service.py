@@ -40,24 +40,18 @@ class SentimentAnalysisService:
                 "resumen": "El cliente está satisfecho con el sabor del café"
             }
         """
-        logger.debug(f"Analizando mensaje: {texto_mensaje[:50]}...")
-
         # Si hay caché, verificar si ya se analizó este mensaje
         if self.cache:
             cache_key = self._get_cache_key(texto_mensaje)
             cached_result = self.cache.get(cache_key)
             if cached_result:
-                logger.info("Análisis encontrado en caché")
                 return cached_result
 
         prompt = self._build_prompt(texto_mensaje)
 
         try:
-            # Llamar a Gemini API
             response = self.model.generate_content(prompt)
             response_text = response.text
-
-            logger.debug(f"Respuesta de Gemini: {response_text}")
 
             # Limpiar respuesta (Gemini a veces añade markdown)
             cleaned_text = self._clean_json_response(response_text)
@@ -71,13 +65,10 @@ class SentimentAnalysisService:
                 if field not in analysis:
                     raise ValueError(f"Campo requerido '{field}' no encontrado en la respuesta")
 
-            logger.info(f"Mensaje analizado: {analysis['sentimiento']}/{analysis['tema']}")
-
             # Guardar en caché si está habilitado
             if self.cache:
                 cache_key = self._get_cache_key(texto_mensaje)
-                self.cache.set(cache_key, analysis, ttl=86400)  # 24 horas
-                logger.debug("Análisis guardado en caché")
+                self.cache.set(cache_key, analysis, ttl=86400)
 
             return analysis
 

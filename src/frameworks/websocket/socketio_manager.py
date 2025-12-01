@@ -22,7 +22,6 @@ class SocketIOManager:
     def __init__(self, socketio: SocketIO):
         self.socketio = socketio
         self._register_handlers()
-        logger.info("SocketIOManager inicializado")
 
     def _register_handlers(self):
         """Registra los event handlers de Socket.IO"""
@@ -30,26 +29,23 @@ class SocketIOManager:
         @self.socketio.on('connect')
         def handle_connect():
             """Cliente conectado al WebSocket"""
-            logger.info(f"Cliente conectado via WebSocket")
             emit('connected', {'message': 'Conectado al servidor de análisis en tiempo real'})
 
         @self.socketio.on('disconnect')
         def handle_disconnect():
             """Cliente desconectado del WebSocket"""
-            logger.info(f"Cliente desconectado")
+            pass
 
         @self.socketio.on('join_dashboard')
         def handle_join_dashboard():
             """Cliente se une al room del dashboard para recibir actualizaciones"""
             join_room('dashboard')
-            logger.info(f"Cliente se unió al room 'dashboard'")
             emit('joined', {'room': 'dashboard'})
 
         @self.socketio.on('leave_dashboard')
         def handle_leave_dashboard():
             """Cliente sale del room del dashboard"""
             leave_room('dashboard')
-            logger.info(f"Cliente salió del room 'dashboard'")
 
     def emit_message_received(self, message_data: dict):
         """
@@ -58,7 +54,6 @@ class SocketIOManager:
         Args:
             message_data: Dict con message_id, numero_remitente, texto_mensaje
         """
-        logger.info(f"Emitiendo evento 'message_received' para mensaje {message_data.get('message_id')}")
         self.socketio.emit(
             'message_received',
             {
@@ -77,7 +72,6 @@ class SocketIOManager:
         Args:
             analysis_data: Dict con message_id, sentimiento, tema, resumen
         """
-        logger.info(f"Emitiendo evento 'message_analyzed' para mensaje {analysis_data.get('message_id')}")
         self.socketio.emit(
             'message_analyzed',
             {
@@ -97,7 +91,6 @@ class SocketIOManager:
         Args:
             stats: Dict con estadísticas actualizadas
         """
-        logger.debug("Emitiendo evento 'stats_updated'")
         self.socketio.emit(
             'stats_updated',
             stats,

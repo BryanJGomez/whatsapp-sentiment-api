@@ -1,10 +1,10 @@
 """
-Configuración de Gunicorn para Socket.IO con gevent.
+Configuración de Gunicorn para Socket.IO con eventlet.
 """
 
 # Configuración de workers
-workers = 1  # Socket.IO requiere 1 worker con gevent
-worker_class = "gevent"  # Usar gevent para WebSockets
+workers = 1  # Socket.IO requiere 1 worker con eventlet
+worker_class = "eventlet"  # Usar eventlet para WebSockets
 worker_connections = 1000
 
 # Bind

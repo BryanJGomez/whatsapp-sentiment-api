@@ -14,8 +14,8 @@ class Settings:
 
     # Redis
     REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
-    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
     REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+    REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
 
     # Google Gemini
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')

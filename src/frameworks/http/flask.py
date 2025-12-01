@@ -44,17 +44,23 @@ def create_flask_app(blueprints: list):
         }
     })
 
-    # CONFIGURACIÓN DE SOCKET.IO
+    # CONFIGURACIÓN DE SOCKET.IO CON REDIS MESSAGE QUEUE
+    # Necesario para múltiples workers/procesos (Gunicorn, Railway)
+    if settings.REDIS_PASSWORD:
+        redis_url = f'redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/0'
+    else:
+        redis_url = f'redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0'
+
     socketio = SocketIO(
         app,
         cors_allowed_origins=settings.SOCKETIO_CORS_ORIGINS,
         async_mode=settings.SOCKETIO_ASYNC_MODE,
+        message_queue=redis_url,  # Crucial para múltiples workers
         logger=False,  # Usar nuestro logger
         engineio_logger=False,
         ping_timeout=60,
         ping_interval=25
     )
-    logger.info(f"Socket.IO inicializado con async_mode={settings.SOCKETIO_ASYNC_MODE}")
 
     # REGISTRAR BLUEPRINTS (Controladores)
     for blueprint in blueprints:

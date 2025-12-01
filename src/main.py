@@ -29,11 +29,11 @@ settings.validate()
 
 # Crear clientes de base de datos
 mongo_client = create_mongo_client()
+mongo_db = mongo_client[settings.MONGO_DB_NAME]
 redis_client = create_redis_client()
 
 # Inicializar colecciones e índices de MongoDB
 logger = setup_logger(__name__)
-logger.info("🗄️  Inicializando esquemas y colecciones de MongoDB...")
 create_collections_and_indexes(
     mongo_client,
     collection_name=settings.MONGO_COLLECTION_MENSAJES
@@ -45,9 +45,9 @@ redis_cache = RedisCache()
 # Crear cola de mensajes
 message_queue = MessageQueue()
 
-# Crear repositorios
-message_repository = MessageRepository(mongo_client)
-dashboard_repository = DashboardRepository(mongo_client)
+# Crear repositorios (sin socket manager en main.py, solo se usa en worker)
+message_repository = MessageRepository(mongo_db)
+dashboard_repository = DashboardRepository(mongo_db)
 
 # Crear servicios (con caché opcional)
 sentiment_analysis_service = SentimentAnalysisService(redis_cache=redis_cache)

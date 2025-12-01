@@ -18,10 +18,10 @@ class MessageQueue:
         self.client = redis.Redis(
             host=settings.REDIS_HOST,
             port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
             decode_responses=True
         )
         self.queue_name = "message_queue"
-        logger.info(f"MessageQueue inicializado en {settings.REDIS_HOST}:{settings.REDIS_PORT}")
 
     def enqueue(self, texto_mensaje: str, numero_remitente: str, message_id: str) -> bool:
         """
@@ -44,8 +44,6 @@ class MessageQueue:
 
             # Agregar a la cola (LPUSH = añadir al inicio)
             self.client.lpush(self.queue_name, json.dumps(message_data))
-
-            logger.info(f"Mensaje encolado: {message_id}")
             return True
 
         except Exception as e:
@@ -69,7 +67,6 @@ class MessageQueue:
             if result:
                 queue_name, message_json = result
                 message_data = json.loads(message_json)
-                logger.info(f"Mensaje sacado de cola: {message_data.get('message_id')}")
                 return message_data
 
             return None

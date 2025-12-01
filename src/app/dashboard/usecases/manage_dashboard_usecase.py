@@ -25,7 +25,6 @@ class DashboardUsecase:
         Returns:
             Dict con estadísticas
         """
-        logger.debug("Obteniendo estadísticas del dashboard")
         return self.dashboard_repository.get_statistics()
 
     def get_sentiment_distribution(self) -> dict:
@@ -35,7 +34,6 @@ class DashboardUsecase:
         Returns:
             Dict con conteo por sentimiento
         """
-        logger.debug("Obteniendo distribución de sentimientos")
         return self.dashboard_repository.get_sentiment_distribution()
 
     def get_top_topics(self, limit: int = 5) -> list:
@@ -48,7 +46,6 @@ class DashboardUsecase:
         Returns:
             Lista de temas con su frecuencia
         """
-        logger.debug(f"Obteniendo top {limit} temas")
         return self.dashboard_repository.get_top_topics(limit)
 
     def get_recent_messages(self, limit: int = 10) -> list:
@@ -61,5 +58,4 @@ class DashboardUsecase:
         Returns:
             Lista de mensajes
         """
-        logger.debug(f"Obteniendo {limit} mensajes recientes")
         return self.dashboard_repository.get_recent_messages(limit)

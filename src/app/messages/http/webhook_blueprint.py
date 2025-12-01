@@ -34,11 +34,10 @@ def webhook_blueprint(message_queue, message_repository):
         - MessageSid: ID único del mensaje de Twilio
         """
         # Obtener datos del formulario
-        logger.info("payload recibido en /whatsapp", extra=request.form.to_dict())
         message_body = request.form.get("Body")
         from_number = request.form.get("From")
         message_sid = request.form.get("MessageSid")
-        logger.debug(f"Body: {message_body}, From: {from_number}, SID: {message_sid}")
+
         # Validar que tengamos los datos necesarios
         if not message_body:
             raise ValidationError("Campo 'Body' es requerido")
@@ -46,21 +45,19 @@ def webhook_blueprint(message_queue, message_repository):
         if not from_number:
             raise ValidationError("Campo 'From' es requerido")
 
-        # 1. Guardar mensaje en MongoDB (sin análisis todavía)
         message = Message(
             texto_mensaje=message_body,
             numero_remitente=from_number,
             message_sid=message_sid
         )
         message_id = message_repository.save(message)
-        logger.debug(f"Mensaje guardado: {message_id}")
+
         # 2. Encolar para procesamiento asíncrono
         message_queue.enqueue(
             texto_mensaje=message_body,
             numero_remitente=from_number,
             message_id=message_id
         )
-        logger.info(f"Mensaje encolado para análisis: {message_id}")
 
         # 3. Emitir evento Socket.IO (mensaje recibido, análisis pendiente)
         try:
@@ -70,7 +67,6 @@ def webhook_blueprint(message_queue, message_repository):
                 "numero_remitente": from_number,
                 "texto_mensaje": message_body
             })
-            logger.debug(f"Evento Socket.IO emitido: message_received")
         except Exception as e:
             logger.warning(f"No se pudo emitir evento Socket.IO: {e}")
 
@@ -96,29 +92,23 @@ def webhook_blueprint(message_queue, message_repository):
         2. Encola para procesamiento
         3. Responde inmediatamente
         """
-        logger.info("Endpoint de prueba llamado")
-
         data = request.get_json()
 
         if not data or "texto_mensaje" not in data or "numero_remitente" not in data:
             raise ValidationError("Se requieren 'texto_mensaje' y 'numero_remitente' en el body JSON")
 
-        # 1. Guardar mensaje
         message = Message(
             texto_mensaje=data["texto_mensaje"],
             numero_remitente=data["numero_remitente"],
             message_sid=data.get("message_sid")
         )
         message_id = message_repository.save(message)
-        logger.debug(f"Mensaje guardado: {message_id}")
 
-        # 2. Encolar
         message_queue.enqueue(
             texto_mensaje=data["texto_mensaje"],
             numero_remitente=data["numero_remitente"],
             message_id=message_id
         )
-        logger.info(f"Mensaje encolado: {message_id}")
 
         # 2.5 Emitir evento Socket.IO
         try:

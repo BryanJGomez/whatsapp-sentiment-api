@@ -1,9 +1,7 @@
 services:
 
   app:
-    build:
-      context: .
-      target: app
+    build: .
     env_file:
       - .env
     working_dir: /app
@@ -12,81 +10,13 @@ services:
       - 0.0.0.0:${DOCKER_PORT}:8080
     volumes:
       - .:/app/
-    depends_on:
-      redis:
-        condition: service_started
-    networks:
-      - backend
-    deploy:
-      resources:
-        limits:
-          memory: ${DOCKER_LIMITS_MEMORY:-1G}
-          cpus: ${DOCKER_LIMITS_CPUS:-1.0}
-    restart: unless-stopped
 
   worker:
-    build:
-      context: .
-      target: worker
+    build: .
     env_file:
       - .env
     working_dir: /app
     command: python worker.py
     volumes:
       - .:/app/
-    depends_on:
-      redis:
-        condition: service_started
-    networks:
-      - backend
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
     restart: unless-stopped
-
-  mongo:
-    image: mongo:7.0
-    restart: unless-stopped
-    ports:
-      - "27017:27017"
-    environment:
-      - MONGO_INITDB_DATABASE=whatsapp_sentiment
-    volumes:
-      - mongodb_data:/data/db
-    networks:
-      - backend
-    healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/whatsapp_sentiment --quiet
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - backend
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    command: redis-server --appendonly yes
-
-
-volumes:
-  mongodb_data:
-    driver: local
-  redis_data:
-    driver: local
-
-networks:
-  backend:
-    driver: bridge

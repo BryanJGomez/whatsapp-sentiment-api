@@ -13,6 +13,8 @@ from src.app.messages.repositories.message_repository import MessageRepository
 from src.app.messages.services.sentiment_analysis_service import SentimentAnalysisService
 from src.frameworks.logging.logger import setup_logger
 from src.config.settings import settings
+from src.app.dashboard.repositories.dasboard_repository import DashboardRepository
+
 
 logger = setup_logger(__name__)
 
@@ -28,16 +30,15 @@ def signal_handler(signum, frame):
 
 
 def process_message(message_data: dict, repository: MessageRepository,
-                   sentiment_service: SentimentAnalysisService,
-                   socketio_manager: SocketIOManager = None):
+                   sentiment_service: SentimentAnalysisService):
     """
     Procesa un mensaje de la cola: analiza con IA y actualiza en MongoDB.
+    Los eventos Socket.IO se emiten automáticamente desde el repositorio.
 
     Args:
         message_data: Dict con texto_mensaje, numero_remitente, message_id
-        repository: Repositorio de mensajes
+        repository: Repositorio de mensajes (con socket manager configurado)
         sentiment_service: Servicio de análisis
-        socketio_manager: Gestor de Socket.IO para notificar al frontend
     """
     try:
         message_id = message_data["message_id"]
@@ -49,26 +50,16 @@ def process_message(message_data: dict, repository: MessageRepository,
         # Analizar con Gemini
         analysis = sentiment_service.analyze_message(texto_mensaje)
 
-        # Actualizar en MongoDB
+        # Actualizar en MongoDB y emitir eventos Socket.IO automáticamente
         repository.update_analysis(
             message_id=message_id,
             sentimiento=analysis["sentimiento"],
             tema=analysis["tema"],
-            resumen=analysis["resumen"]
+            resumen=analysis["resumen"],
+            numero_remitente=numero_remitente
         )
 
         logger.info(f"Mensaje {message_id} procesado: {analysis['sentimiento']}/{analysis['tema']}")
-
-        # Emitir evento Socket.IO al frontend (si está disponible)
-        if socketio_manager:
-            socketio_manager.emit_message_analyzed({
-                "message_id": message_id,
-                "sentimiento": analysis["sentimiento"],
-                "tema": analysis["tema"],
-                "resumen": analysis["resumen"],
-                "numero_remitente": numero_remitente
-            })
-            logger.debug(f"Evento Socket.IO emitido para mensaje {message_id}")
 
     except Exception as e:
         logger.error(f"Error procesando mensaje {message_data.get('message_id')}: {e}")
@@ -82,28 +73,32 @@ def main():
     # Registrar handlers para shutdown graceful
     signal.signal(signal.SIGTERM, signal_handler)
     signal.signal(signal.SIGINT, signal_handler)
-
-    logger.info("Worker iniciando...")
-
-    # Validar configuraciones
-    logger.info("Validando configuraciones...")
     settings.validate()
-    logger.info("Configuraciones validadas")
 
     # Inicializar dependencias
-    logger.info("Inicializando dependencias...")
     mongo_client = create_mongo_client()
-    redis_cache = RedisCache()
-    message_queue = MessageQueue()
-    message_repository = MessageRepository(mongo_client)
-    sentiment_service = SentimentAnalysisService(redis_cache=redis_cache)
+    mongo_db = mongo_client[settings.MONGO_DB_NAME]
 
-    # Inicializar Socket.IO para emitir eventos al frontend
-    # Nota: El worker NO ejecuta el servidor SocketIO, solo emite eventos via Redis pub/sub
-    socketio = SocketIO(message_broker=f'redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0')
+    # Configurar Socket.IO para emitir eventos a través de Redis
+    if settings.REDIS_PASSWORD:
+        redis_url = f'redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_HOST}:{settings.REDIS_PORT}/0'
+    else:
+        redis_url = f'redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}/0'
+
+    socketio = SocketIO(message_queue=redis_url)
     socketio_manager = SocketIOManager(socketio)
 
-    logger.info("Dependencias inicializadas")
+    dashboard_repository = DashboardRepository(mongo_db)
+
+    redis_cache = RedisCache()
+    message_queue = MessageQueue()
+    sentiment_service = SentimentAnalysisService(redis_cache=redis_cache)
+
+    message_repository = MessageRepository(
+        mongo_db=mongo_db,
+        socketio_manager=socketio_manager,
+        dashboard_repository=dashboard_repository
+    )
 
     logger.info(f"Worker escuchando cola '{message_queue.queue_name}'...")
 
@@ -114,10 +109,7 @@ def main():
             message_data = message_queue.dequeue(timeout=5)
 
             if message_data:
-                process_message(message_data, message_repository, sentiment_service, socketio_manager)
-            else:
-                # No hay mensajes, continuar esperando
-                logger.debug("Esperando mensajes en la cola...")
+                process_message(message_data, message_repository, sentiment_service)
 
         except KeyboardInterrupt:
             logger.warning("KeyboardInterrupt recibido, cerrando worker...")

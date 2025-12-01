@@ -1,12 +1,13 @@
 from pymongo import MongoClient
 from src.config.settings import settings
 
-# Función para crear una conexión a MongoDB.
 
-# Usa las configuraciones centralizadas desde settings.py
-# para conectarse a MongoDB y retornar la base de datos configurada.
+def create_mongo_client() -> MongoClient:
+    """
+    Crea y retorna un cliente de MongoDB.
 
-def create_mongo_client():
-
+    Returns:
+        MongoClient: Cliente de MongoDB configurado
+    """
     client = MongoClient(settings.MONGO_URI)
-    return client[settings.MONGO_DB_NAME]
+    return client

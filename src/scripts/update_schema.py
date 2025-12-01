@@ -15,34 +15,32 @@ from src.config.settings import settings
 
 def main():
     """Actualizar el validador de la colección"""
-    print("=" * 60)
-    print("🔧 ACTUALIZANDO ESQUEMA DE VALIDACIÓN")
-    print("=" * 60)
+    print("ACTUALIZANDO ESQUEMA DE VALIDACIÓN")
 
     # Validar configuración
     settings.validate()
 
     # Conectar a MongoDB
-    print("\n📡 Conectando a MongoDB...")
+    print("\nConectando a MongoDB...")
     mongo_client = create_mongo_client()
 
     # Nombre de la colección
     collection_name = settings.MONGO_COLLECTION_MENSAJES
 
     # Actualizar el validador
-    print(f"\n🗄️  Actualizando validador de '{collection_name}'...")
+    print(f"\n Actualizando validador de '{collection_name}'...")
     try:
         mongo_client.command({
             "collMod": collection_name,
             "validator": MENSAJES_SCHEMA
         })
-        print(f"✅ Validador actualizado correctamente")
+        print(f"Validador actualizado correctamente")
     except Exception as e:
-        print(f"❌ Error actualizando validador: {e}")
+        print(f"Error actualizando validador: {e}")
         return
 
     print("\n" + "=" * 60)
-    print("✅ ACTUALIZACIÓN COMPLETADA")
+    print("ACTUALIZACIÓN COMPLETADA")
     print("=" * 60)
 
 

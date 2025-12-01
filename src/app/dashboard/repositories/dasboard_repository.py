@@ -19,7 +19,6 @@ class DashboardRepository():
             collection_name += "_test"
 
         self.collection = mongo_db[collection_name]
-        logger.info(f"DashboardRepository inicializado para colección '{collection_name}'")
 
     def get_statistics(self) -> dict:
         """
@@ -28,30 +27,64 @@ class DashboardRepository():
         Returns:
             Diccionario con estadísticas
         """
-        logger.debug("Calculando estadísticas generales")
-
         total = self.collection.count_documents({})
-        analizados = self.collection.count_documents({"sentimiento": {"$ne": None}})
-        pendientes = total - analizados
+
+        pipeline_sentimientos = [
+            {"$match": {"sentimiento": {"$ne": None}}},
+            {"$group": {
+                "_id": "$sentimiento",
+                "count": {"$sum": 1}
+            }}
+        ]
+
+        cursor = self.collection.aggregate(
+            pipeline_sentimientos,
+            readConcern={"level": "majority"}
+        )
+        sentimientos = serialize_mongo_document(list(cursor))
+
+        total_analizados = sum(item["count"] for item in sentimientos)
+        count_positivo = next((item["count"] for item in sentimientos if item["_id"] == "positivo"), 0)
+        count_negativo = next((item["count"] for item in sentimientos if item["_id"] == "negativo"), 0)
+
+        # Calcular porcentajes
+        porcentaje_positivo = round((count_positivo / total_analizados * 100)) if total_analizados > 0 else 0
+        porcentaje_negativo = round((count_negativo / total_analizados * 100)) if total_analizados > 0 else 0
+
+        # Obtener tema principal con read_concern
+        pipeline_tema = [
+            {"$match": {"tema": {"$ne": None}}},
+            {"$group": {
+                "_id": "$tema",
+                "count": {"$sum": 1}
+            }},
+            {"$sort": {"count": -1}},
+            {"$limit": 1}
+        ]
+
+        cursor_tema = self.collection.aggregate(
+            pipeline_tema,
+            readConcern={"level": "majority"}
+        )
+        temas = serialize_mongo_document(list(cursor_tema))
+        tema_principal = temas[0]["_id"] if temas else "N/A"
 
         stats = {
             "total_mensajes": total,
-            "mensajes_analizados": analizados,
-            "mensajes_pendientes": pendientes
+            "sentimiento_positivo": porcentaje_positivo,
+            "sentimiento_negativo": porcentaje_negativo,
+            "tema_principal": tema_principal
         }
 
-        logger.info(f"Estadísticas: {stats}")
         return stats
 
     def get_sentiment_distribution(self) -> dict:
         """
-        Obtiene la distribución de sentimientos.
+        Obtiene la distribución de sentimientos en porcentajes.
 
         Returns:
-            Diccionario con conteo por sentimiento
+            Diccionario con porcentaje por sentimiento
         """
-        logger.debug("Calculando distribución de sentimientos")
-
         pipeline = [
             {"$match": {"sentimiento": {"$ne": None}}},
             {"$group": {
@@ -60,10 +93,14 @@ class DashboardRepository():
             }}
         ]
 
-        cursor = self.collection.aggregate(pipeline)
+        cursor = self.collection.aggregate(
+            pipeline,
+            readConcern={"level": "majority"}
+        )
         results = serialize_mongo_document(list(cursor))
 
-        # Convertir a formato más legible
+        total = sum(item["count"] for item in results)
+
         distribution = {
             "positivo": 0,
             "negativo": 0,
@@ -71,10 +108,9 @@ class DashboardRepository():
         }
 
         for item in results:
-            if item["_id"] in distribution:
-                distribution[item["_id"]] = item["count"]
+            if item["_id"] in distribution and total > 0:
+                distribution[item["_id"]] = round((item["count"] / total) * 100)
 
-        logger.info(f"Distribución calculada: {distribution}")
         return distribution
 
     def get_top_topics(self, limit: int = 5) -> List[dict]:
@@ -87,8 +123,6 @@ class DashboardRepository():
         Returns:
             Lista de temas con su frecuencia
         """
-        logger.debug(f"Obteniendo top {limit} temas")
-
         pipeline = [
             {"$match": {"tema": {"$ne": None}}},
             {"$group": {
@@ -99,10 +133,20 @@ class DashboardRepository():
             {"$limit": limit}
         ]
 
-        cursor = self.collection.aggregate(pipeline)
-        topics = serialize_mongo_document(list(cursor))
+        cursor = self.collection.aggregate(
+            pipeline,
+            readConcern={"level": "majority"}
+        )
+        results = serialize_mongo_document(list(cursor))
 
-        logger.info(f"Top temas obtenidos: {len(topics)} resultados")
+        topics = [
+            {
+                "tema": item["_id"],
+                "cantidad": item["count"]
+            }
+            for item in results
+        ]
+
         return topics
 
     def get_recent_messages(self, limit: int = 10) -> List[dict]:
@@ -112,13 +156,7 @@ class DashboardRepository():
         Args:
             limit: Número máximo de mensajes a retornar
 
-        Returns:
-            Lista de mensajes serializados
         """
-        logger.debug(f"Obteniendo últimos {limit} mensajes")
-
         cursor = self.collection.find().sort("timestamp", -1).limit(limit)
         messages = serialize_mongo_document(list(cursor))
-
-        logger.info(f"{len(messages)} mensajes recientes obtenidos")
         return messages

@@ -19,8 +19,6 @@ def dashboard_blueprint(dashboard_usecase):
     @handle_errors
     def get_statistics():
         """Obtiene estadísticas generales del dashboard"""
-        logger.info("Obteniendo estadísticas generales")
-
         stats = dashboard_usecase.get_statistics()
 
         return jsonify({
@@ -33,8 +31,6 @@ def dashboard_blueprint(dashboard_usecase):
     @handle_errors
     def get_sentiment_distribution():
         """Obtiene la distribución de sentimientos (positivo, negativo, neutro)"""
-        logger.info("Obteniendo distribución de sentimientos")
-
         distribution = dashboard_usecase.get_sentiment_distribution()
 
         return jsonify({
@@ -47,9 +43,7 @@ def dashboard_blueprint(dashboard_usecase):
     @handle_errors
     def get_top_topics():
         """Obtiene los temas más frecuentes mencionados por los clientes"""
-        logger.info("Obteniendo temas frecuentes")
-
-        limit = request.args.get("limit", default=5, type=int)
+        limit = request.args.get("limit", default=20, type=int)
         topics = dashboard_usecase.get_top_topics(limit=limit)
 
         return jsonify({
@@ -62,8 +56,6 @@ def dashboard_blueprint(dashboard_usecase):
     @handle_errors
     def get_recent_messages():
         """Obtiene los mensajes más recientes con su análisis"""
-        logger.info("Obteniendo mensajes recientes")
-
         limit = request.args.get("limit", default=10, type=int)
         messages = dashboard_usecase.get_recent_messages(limit=limit)
 

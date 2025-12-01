@@ -17,9 +17,10 @@ class RedisCache:
         self.client = redis.Redis(
             host=settings.REDIS_HOST,
             port=settings.REDIS_PORT,
+            password=settings.REDIS_PASSWORD,
             decode_responses=True  # Decodifica automáticamente a strings
         )
-        logger.info(f"RedisCache conectado a {settings.REDIS_HOST}:{settings.REDIS_PORT}")
+        pass
 
     def get(self, key: str):
         """
@@ -34,9 +35,7 @@ class RedisCache:
         try:
             value = self.client.get(key)
             if value:
-                logger.debug(f"Cache HIT: {key}")
                 return json.loads(value)
-            logger.debug(f"Cache MISS: {key}")
             return None
         except Exception as e:
             logger.error(f"Error al obtener del cache: {e}")
@@ -57,7 +56,6 @@ class RedisCache:
                 ttl,
                 json.dumps(value)
             )
-            logger.debug(f"Cache SET: {key} (TTL: {ttl}s)")
         except Exception as e:
             logger.error(f"Error al guardar en cache: {e}")
 
@@ -65,7 +63,6 @@ class RedisCache:
         """Elimina una clave del caché"""
         try:
             self.client.delete(key)
-            logger.debug(f"Cache DELETE: {key}")
         except Exception as e:
             logger.error(f"Error al eliminar del cache: {e}")
 
