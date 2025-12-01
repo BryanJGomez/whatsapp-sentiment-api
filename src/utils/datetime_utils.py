@@ -1,24 +1,30 @@
 from datetime import datetime
 from typing import Optional
 import pytz
+from src.config.settings import settings
 
 
 def format_timestamp_to_local(
     timestamp: str,
-    timezone: str = 'America/El_Salvador',
-    format: str = '%Y-%m-%d %H:%M:%S'
+    timezone: str = None,
+    format: str = None
 ) -> str:
     """
     Convierte un timestamp UTC a hora local en el formato especificado.
 
     Args:
         timestamp: String con el timestamp en formato ISO 8601
-        timezone: Zona horaria de destino (por defecto El Salvador)
-        format: Formato de salida (por defecto '%Y-%m-%d %H:%M:%S')
+        timezone: Zona horaria de destino (por defecto la de settings)
+        format: Formato de salida (por defecto el de settings)
 
     Returns:
         String con la fecha y hora formateada en hora local
     """
+    if timezone is None:
+        timezone = settings.TIMEZONE
+    if format is None:
+        format = settings.DATETIME_FORMAT
+
     try:
         # Parsear el timestamp
         if isinstance(timestamp, str):

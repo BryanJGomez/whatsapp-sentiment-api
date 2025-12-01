@@ -7,10 +7,6 @@ from pymongo.database import Database
 from pymongo import ASCENDING, DESCENDING
 
 
-# ============================================
-# ESQUEMA DE VALIDACIÓN - COLECCIÓN MENSAJES
-# ============================================
-
 MENSAJES_SCHEMA = {
     "$jsonSchema": {
         "bsonType": "object",
@@ -54,11 +50,6 @@ MENSAJES_SCHEMA = {
     }
 }
 
-
-# ============================================
-# ÍNDICES PARA OPTIMIZACIÓN DE CONSULTAS
-# ============================================
-
 MENSAJES_INDEXES = [
     # Índice para ordenar por fecha (usado en mensajes recientes)
     {
@@ -97,10 +88,6 @@ MENSAJES_INDEXES = [
     },
 ]
 
-
-# ============================================
-# FUNCIONES PARA GESTIÓN DE COLECCIONES
-# ============================================
 def create_collections_and_indexes(db: Database, collection_name: str = "mensajes"):
     """
     Crea la colección con validación de esquema e índices.

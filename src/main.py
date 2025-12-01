@@ -35,7 +35,7 @@ redis_client = create_redis_client()
 # Inicializar colecciones e índices de MongoDB
 logger = setup_logger(__name__)
 create_collections_and_indexes(
-    mongo_client,
+    mongo_db,
     collection_name=settings.MONGO_COLLECTION_MENSAJES
 )
 

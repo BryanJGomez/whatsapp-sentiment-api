@@ -4,16 +4,15 @@ Utilidades para serialización de datos de MongoDB a JSON.
 
 from datetime import datetime
 from bson import ObjectId
+from src.utils.datetime_utils import format_timestamp_to_local
 
 
-def serialize_mongo_document(doc):
+def serialize_mongo_document(doc, format_dates: bool = True):
     """
     Convierte un documento de MongoDB a un diccionario serializable a JSON.
 
     Maneja tipos especiales de MongoDB:
     - ObjectId -> str
-    - datetime -> ISO 8601 string
-    - Cursor -> list
 
     Args:
         doc: Documento o lista de documentos de MongoDB
@@ -25,11 +24,11 @@ def serialize_mongo_document(doc):
         return None
 
     if isinstance(doc, list):
-        return [serialize_mongo_document(item) for item in doc]
+        return [serialize_mongo_document(item, format_dates) for item in doc]
 
     if isinstance(doc, dict):
         return {
-            key: serialize_mongo_document(value)
+            key: serialize_mongo_document(value, format_dates)
             for key, value in doc.items()
         }
 
@@ -37,6 +36,8 @@ def serialize_mongo_document(doc):
         return str(doc)
 
     if isinstance(doc, datetime):
+        if format_dates:
+            return format_timestamp_to_local(doc.isoformat())
         return doc.isoformat()
 
     return doc

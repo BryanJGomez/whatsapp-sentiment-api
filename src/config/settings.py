@@ -9,8 +9,8 @@ class Settings:
 
     # MongoDB
     MONGO_URI = os.getenv('MONGO_URI')
-    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME')
-    MONGO_COLLECTION_MENSAJES = os.getenv('MONGO_COLLECTION_MENSAJES')
+    MONGO_DB_NAME = os.getenv('MONGO_DB_NAME', 'whatsapp_sentiment')
+    MONGO_COLLECTION_MENSAJES = os.getenv('MONGO_COLLECTION_MENSAJES', 'mensajes')
 
     # Redis
     REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
@@ -41,22 +41,32 @@ class Settings:
     TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
     TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 
+    # Configuración de timezone y formato de fechas
+    TIMEZONE = os.getenv('TIMEZONE', 'America/El_Salvador')
+    DATETIME_FORMAT = os.getenv('DATETIME_FORMAT', '%Y-%m-%d %H:%M:%S')
+
     @classmethod
     def validate(cls):
         """Valida que las configuraciones críticas estén presentes"""
         errors = []
 
         if not cls.GEMINI_API_KEY:
-            errors.append("⚠️  GEMINI_API_KEY no está configurada correctamente")
+            errors.append("GEMINI_API_KEY no está configurada correctamente")
 
         if not cls.MONGO_URI:
             errors.append("❌ MONGO_URI no está configurada")
+
+        if not cls.MONGO_DB_NAME:
+            errors.append("MONGO_DB_NAME no está configurada")
+
+        if not cls.MONGO_COLLECTION_MENSAJES:
+            errors.append("MONGO_COLLECTION_MENSAJES no está configurada")
 
         if errors:
             for error in errors:
                 print(error)
             # Solo lanzar error si es crítico (MongoDB)
-            if not cls.MONGO_URI:
+            if not cls.MONGO_URI or not cls.MONGO_DB_NAME:
                 raise ValueError("Configuraciones críticas faltantes")
 
 
