@@ -81,8 +81,8 @@ def create_flask_app(blueprints: list):
                 "health": "/health",
                 "webhook": "/webhook/whatsapp",
                 "estadisticas": "/api/estadisticas",
-                "distribucion": "/api/distribucion-sentimientos",
-                "temas": "/api/temas-frecuentes",
+                "distribucion": "/api/sentimientos",
+                "temas": "/api/temas",
                 "mensajes": "/api/mensajes-recientes",
                 "sentimientos_tema": "/api/sentimientos-por-tema"
             }

@@ -27,7 +27,7 @@ def dashboard_blueprint(dashboard_usecase):
             "data": stats
         }), 200
 
-    @blueprint.route("/distribucion-sentimientos", methods=["GET"])
+    @blueprint.route("/sentimientos", methods=["GET"])
     @handle_errors
     def get_sentiment_distribution():
         """Obtiene la distribución de sentimientos (positivo, negativo, neutro)"""
@@ -39,7 +39,7 @@ def dashboard_blueprint(dashboard_usecase):
             "data": distribution
         }), 200
 
-    @blueprint.route("/temas-frecuentes", methods=["GET"])
+    @blueprint.route("/temas", methods=["GET"])
     @handle_errors
     def get_top_topics():
         """Obtiene los temas más frecuentes mencionados por los clientes"""
