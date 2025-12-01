@@ -327,9 +327,10 @@ Seguimos [Conventional Commits](https://www.conventionalcommits.org/):
 3. Generar API Key
 4. Copiar la key al archivo `.env`
 
-### Configurar Twilio para WhatsApp
+### Configurar Twilio para WhatsApp(PROD)
 
-1. Numero configurado para este proyecto en sandbox +14155238886
+1. Numero configurado para este proyecto en sandbox, empezar un chat de WhatsApp a este numero +14155238886
+2. código a escribir en el chat de WhatsApp join current-doctor
 
 #### Paso 1: Crear cuenta y obtener Sandbox
 
